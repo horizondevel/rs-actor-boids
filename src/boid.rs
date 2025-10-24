@@ -1,0 +1,89 @@
+use tokio::sync::mpsc;
+use tracing::instrument;
+
+use crate::{boid_manager::BoidManagerHandle, world::WorldTime};
+pub type BoidId = u64;
+
+pub async fn run_boid(mut boid: Boid) -> crate::Result<()> {
+    while let Some(msg) = boid.receiver.recv().await {
+        tracing::debug!("Boid::{msg:?}");
+        boid.handle_message(msg).await?;
+    }
+    Ok(())
+}
+#[derive(Debug)]
+pub struct Boid {
+    receiver: mpsc::Receiver<BoidMessage>,
+    boid_state: BoidState,
+    manager_handle: BoidManagerHandle,
+}
+#[derive(Debug, Clone)]
+pub struct BoidState {
+    pub id: BoidId,
+    pub last_update_time: WorldTime,
+    pub pos: (f64, f64),
+    pub vel: (f64, f64),
+}
+
+impl BoidState {
+    pub fn new(id: BoidId) -> Self {
+        Self {
+            id,
+            last_update_time: 0,
+            pos: (0.0, 0.0),
+            vel: (1.0, 0.0),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BoidHandle {
+    sender: mpsc::Sender<BoidMessage>,
+}
+
+impl BoidHandle {
+    pub fn new(id: BoidId, manager_handle: &BoidManagerHandle) -> Self {
+        let (send, recv) = mpsc::channel(32);
+        let boid = Boid {
+            receiver: recv,
+            manager_handle: manager_handle.clone(),
+            boid_state: BoidState::new(id),
+        };
+        tokio::spawn(run_boid(boid));
+        Self { sender: send }
+    }
+    pub async fn update(&self, time: WorldTime) -> crate::Result<()> {
+        self.sender.send(BoidMessage::Update(time)).await?;
+        Ok(())
+    }
+    pub async fn confirm(&self, boid_state: BoidState) -> crate::Result<()> {
+        self.sender.send(BoidMessage::Confirm(boid_state)).await?;
+        Ok(())
+    }
+}
+#[derive(Debug)]
+pub enum BoidMessage {
+    Update(u64),
+    Confirm(BoidState),
+}
+
+impl Boid {
+    async fn handle_message(&mut self, msg: BoidMessage) -> crate::Result<()> {
+        tracing::debug!("Boid received::{msg:?}");
+        match msg {
+            BoidMessage::Update(time) => {
+                let mut new_state = self.boid_state.clone();
+                new_state.pos = (
+                    new_state.pos.0 + new_state.vel.0,
+                    new_state.pos.1 + new_state.vel.1,
+                );
+                new_state.last_update_time = time;
+                self.manager_handle.boid_update(new_state).await?;
+            }
+            BoidMessage::Confirm(boid_state) => {
+                self.boid_state = boid_state;
+            }
+        }
+        Ok(())
+    }
+}

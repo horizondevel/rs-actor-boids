@@ -1,0 +1,32 @@
+[package]
+name = "boids"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+# Argument Parsing: The core of the CLI interface
+clap = { version = "4.5.49", features = ["derive"] }
+
+# Asynchronous Runtime: Essential for high-performance I/O tasks
+# We use a standard set of features for an asynchronous CLI
+tokio = { version = "1.48", features = [
+    "sync",
+    "macros",
+    "rt-multi-thread",
+    "signal",
+    "time",
+] }
+
+# Configuration: Zero-boilerplate for application settings
+config = "0.15"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+
+# Error Handling: Simplifies result management across the application
+anyhow = "1.0.100"
+derive_more = { version = "2", features = ["from"] }
+
+# Logging/Observability: Critical for maintenance and debugging
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
