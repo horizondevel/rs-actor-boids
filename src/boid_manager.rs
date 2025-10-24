@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use derive_more::Display;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::{
@@ -32,7 +33,7 @@ impl BoidManagerHandle {
         Ok(())
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
 pub enum BoidManagerMessage {
     WorldUpdate(u64),
     BoidUpdate(BoidState),

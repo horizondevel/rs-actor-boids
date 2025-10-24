@@ -1,3 +1,4 @@
+use derive_more::Display;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -13,7 +14,8 @@ pub struct Boid {
     boid_state: BoidState,
     manager_handle: BoidManagerHandle,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display("id")]
 pub struct BoidState {
     pub id: BoidId,
     pub last_update_time: WorldTime,
@@ -40,6 +42,7 @@ pub struct BoidHandle {
 impl BoidHandle {
     pub fn new(id: BoidId, manager_handle: &BoidManagerHandle) -> Self {
         let (send, recv) = mpsc::channel(32);
+
         let boid = Boid {
             receiver: recv,
             manager_handle: manager_handle.clone(),
@@ -57,7 +60,7 @@ impl BoidHandle {
         Ok(())
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub enum BoidMessage {
     Update(u64),
     Confirm(BoidState),
@@ -65,7 +68,6 @@ pub enum BoidMessage {
 
 impl Actor<BoidMessage> for Boid {
     async fn handle_message(&mut self, msg: BoidMessage) -> crate::Result<()> {
-        tracing::debug!("Boid received::{msg:?}");
         match msg {
             BoidMessage::Update(time) => {
                 let mut new_state = self.boid_state.clone();

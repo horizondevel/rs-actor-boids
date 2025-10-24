@@ -1,3 +1,4 @@
+use derive_more::Display;
 use tokio::sync::mpsc::{self, Sender, channel};
 use tracing::debug;
 pub type WorldTime = u64;
@@ -41,7 +42,7 @@ impl WorldHandle {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Display)]
 pub enum WorldMessage {
     Start,
     UpdateComplete(WorldTime),
@@ -67,7 +68,6 @@ impl World {
 }
 impl Actor<WorldMessage> for World {
     async fn handle_message(&mut self, msg: WorldMessage) -> crate::Result<()> {
-        tracing::debug!("Recieved message {msg:?}");
         match msg {
             WorldMessage::Stop => self.receiver.close(),
             WorldMessage::Start => {
@@ -76,7 +76,6 @@ impl Actor<WorldMessage> for World {
                 self.manager_handle.update(self.world_state.time).await?;
             }
             WorldMessage::UpdateComplete(time) => {
-                debug!("Update cycle complete {time}");
                 if time > END_TIME {
                     self.receiver.close()
                 } else {

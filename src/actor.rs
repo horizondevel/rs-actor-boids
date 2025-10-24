@@ -1,5 +1,10 @@
-pub async fn run_actor<M, T: Actor<M>>(mut actor: T) -> crate::Result<()> {
+use std::fmt::Debug;
+
+use tracing::trace;
+
+pub async fn run_actor<M: Debug, T: Actor<M>>(mut actor: T) -> crate::Result<()> {
     while let Some(msg) = actor.recv().await {
+        trace!("Received::{:?}", msg);
         actor.handle_message(msg).await?;
     }
     Ok(())

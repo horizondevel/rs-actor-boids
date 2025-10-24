@@ -25,7 +25,7 @@ serde_json = "1.0.145"
 
 # Error Handling: Simplifies result management across the application
 anyhow = "1.0.100"
-derive_more = { version = "2", features = ["from"] }
+derive_more = { version = "2", features = ["from", "display"] }
 
 # Logging/Observability: Critical for maintenance and debugging
 tracing = "0.1.41"
