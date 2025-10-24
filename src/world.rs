@@ -66,7 +66,8 @@ impl World {
         }
     }
 }
-impl Actor<WorldMessage> for World {
+impl Actor for World {
+    type Message = WorldMessage;
     async fn handle_message(&mut self, msg: WorldMessage) -> crate::Result<()> {
         match msg {
             WorldMessage::Stop => self.receiver.close(),

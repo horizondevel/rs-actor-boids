@@ -66,7 +66,8 @@ pub enum BoidMessage {
     Confirm(BoidState),
 }
 
-impl Actor<BoidMessage> for Boid {
+impl Actor for Boid {
+    type Message = BoidMessage;
     async fn handle_message(&mut self, msg: BoidMessage) -> crate::Result<()> {
         match msg {
             BoidMessage::Update(time) => {

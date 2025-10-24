@@ -67,7 +67,8 @@ impl BoidManager {
         }
     }
 }
-impl Actor<BoidManagerMessage> for BoidManager {
+impl Actor for BoidManager {
+    type Message = BoidManagerMessage;
     async fn handle_message(&mut self, msg: BoidManagerMessage) -> crate::Result<()> {
         match msg {
             BoidManagerMessage::WorldUpdate(time) => {

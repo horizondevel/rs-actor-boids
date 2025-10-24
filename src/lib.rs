@@ -28,5 +28,5 @@ impl std::fmt::Display for Error {
 }
 impl std::error::Error for Error {}
 
-pub const END_TIME: u64 = 60 * 30;
+pub const END_TIME: u64 = 60 * 60;
 pub const NUM_BOIDS: u64 = 100;
