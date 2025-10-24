@@ -1,8 +1,5 @@
 use derive_more::From;
-use tokio::{
-    sync::mpsc::{self, error::SendError},
-    task::JoinError,
-};
+use tokio::{sync::mpsc::error::SendError, task::JoinError};
 
 use crate::world::WorldMessage;
 use crate::{boid::BoidMessage, boid_manager::BoidManagerMessage};
@@ -31,4 +28,5 @@ impl std::fmt::Display for Error {
 }
 impl std::error::Error for Error {}
 
-pub const END_TIME: u64 = 60 * 10;
+pub const END_TIME: u64 = 60 * 30;
+pub const NUM_BOIDS: u64 = 100;

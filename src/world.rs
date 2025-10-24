@@ -1,22 +1,11 @@
-use std::time::Duration;
-
 use tokio::sync::mpsc::{self, Sender, channel};
-use tracing::{Level, debug, event, span};
+use tracing::debug;
 pub type WorldTime = u64;
 use crate::{
     END_TIME,
-    boid_manager::{BoidManager, BoidManagerHandle, run_boid_manager},
+    actor::{Actor, run_actor},
+    boid_manager::{BoidManager, BoidManagerHandle},
 };
-pub async fn run_world(mut world: World) -> crate::Result<()> {
-    while let Some(msg) = world.receiver.recv().await {
-        {
-            let span = span!(Level::DEBUG, "world_msg");
-            let _enter = span.enter();
-            world.handle_message(msg).await?;
-        }
-    }
-    Ok(())
-}
 
 pub struct World {
     receiver: mpsc::Receiver<WorldMessage>,
@@ -68,14 +57,15 @@ impl World {
         let (send, recv) = channel(32);
         let manager_handle = BoidManagerHandle::new(send);
         let manager = BoidManager::new(recv, world_handle, &manager_handle);
-        tokio::spawn(run_boid_manager(manager));
+        tokio::spawn(run_actor(manager));
         Self {
             receiver,
             manager_handle,
             world_state: WorldState { time },
         }
     }
-
+}
+impl Actor<WorldMessage> for World {
     async fn handle_message(&mut self, msg: WorldMessage) -> crate::Result<()> {
         tracing::debug!("Recieved message {msg:?}");
         match msg {
@@ -98,5 +88,8 @@ impl World {
             }
         }
         Ok(())
+    }
+    async fn recv(&mut self) -> Option<WorldMessage> {
+        self.receiver.recv().await
     }
 }

@@ -3,20 +3,11 @@ use std::collections::HashMap;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::{
+    NUM_BOIDS,
+    actor::Actor,
     boid::{BoidHandle, BoidId, BoidState},
     world::{WorldHandle, WorldTime},
 };
-pub async fn run_boid_manager(mut boid_manager: BoidManager) -> crate::Result<()> {
-    while let Some(msg) = boid_manager.receiver.recv().await {
-        {
-            let span = tracing::debug_span!("boid_manager");
-            let _enter = span.enter();
-            tracing::debug!("BoidManager::{msg:?}");
-            boid_manager.handle_msg(msg).await?;
-        }
-    }
-    Ok(())
-}
 
 #[derive(Debug, Clone)]
 pub struct BoidManagerHandle {
@@ -63,7 +54,7 @@ impl BoidManager {
         manager_handle: &BoidManagerHandle,
     ) -> Self {
         let mut boids = HashMap::new();
-        for i in 0..10000 {
+        for i in 0..NUM_BOIDS {
             boids.insert(i, BoidHandle::new(i, manager_handle));
         }
         Self {
@@ -74,7 +65,9 @@ impl BoidManager {
             update_cycle_completed: Vec::new(),
         }
     }
-    pub async fn handle_msg(&mut self, msg: BoidManagerMessage) -> crate::Result<()> {
+}
+impl Actor<BoidManagerMessage> for BoidManager {
+    async fn handle_message(&mut self, msg: BoidManagerMessage) -> crate::Result<()> {
         match msg {
             BoidManagerMessage::WorldUpdate(time) => {
                 self.update_cycle_time = time;
@@ -101,6 +94,9 @@ impl BoidManager {
             BoidManagerMessage::Stop => self.receiver.close(),
         }
         Ok(())
+    }
+    async fn recv(&mut self) -> Option<BoidManagerMessage> {
+        self.receiver.recv().await
     }
 }
 

@@ -1,16 +1,12 @@
 use tokio::sync::mpsc;
-use tracing::instrument;
 
-use crate::{boid_manager::BoidManagerHandle, world::WorldTime};
+use crate::{
+    actor::{Actor, run_actor},
+    boid_manager::BoidManagerHandle,
+    world::WorldTime,
+};
 pub type BoidId = u64;
 
-pub async fn run_boid(mut boid: Boid) -> crate::Result<()> {
-    while let Some(msg) = boid.receiver.recv().await {
-        tracing::debug!("Boid::{msg:?}");
-        boid.handle_message(msg).await?;
-    }
-    Ok(())
-}
 #[derive(Debug)]
 pub struct Boid {
     receiver: mpsc::Receiver<BoidMessage>,
@@ -49,7 +45,7 @@ impl BoidHandle {
             manager_handle: manager_handle.clone(),
             boid_state: BoidState::new(id),
         };
-        tokio::spawn(run_boid(boid));
+        tokio::spawn(run_actor(boid));
         Self { sender: send }
     }
     pub async fn update(&self, time: WorldTime) -> crate::Result<()> {
@@ -67,7 +63,7 @@ pub enum BoidMessage {
     Confirm(BoidState),
 }
 
-impl Boid {
+impl Actor<BoidMessage> for Boid {
     async fn handle_message(&mut self, msg: BoidMessage) -> crate::Result<()> {
         tracing::debug!("Boid received::{msg:?}");
         match msg {
@@ -85,5 +81,9 @@ impl Boid {
             }
         }
         Ok(())
+    }
+
+    async fn recv(&mut self) -> Option<BoidMessage> {
+        self.receiver.recv().await
     }
 }
